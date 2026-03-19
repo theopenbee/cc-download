@@ -92,8 +92,8 @@ jobs:
 
           PLATFORMS=("darwin-arm64" "darwin-x64" "linux-arm64" "linux-x64" "linux-arm64-musl" "linux-x64-musl")
 
-          echo "==> Installing ossutil v1.7.19..."
-          curl -fsSL https://gosspublic.alicdn.com/ossutil/1.7.19/ossutil64 -o ossutil
+          echo "==> Installing ossutil v1.7.18..."
+          curl -fsSL https://gosspublic.alicdn.com/ossutil/1.7.18/ossutil64 -o ossutil
           chmod +x ossutil
 
           echo "==> Configuring OSS credentials..."
