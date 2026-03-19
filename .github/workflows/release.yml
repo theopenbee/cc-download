@@ -80,6 +80,51 @@ jobs:
           sha256sum claude-* > checksums-sha256.txt
           cat checksums-sha256.txt
 
+      - name: Upload to Alibaba Cloud OSS
+        env:
+          VERSION: ${{ steps.version.outputs.version }}
+          OSS_ACCESS_KEY_ID: ${{ secrets.OSS_ACCESS_KEY_ID }}
+          OSS_ACCESS_KEY_SECRET: ${{ secrets.OSS_ACCESS_KEY_SECRET }}
+          OSS_BUCKET: ${{ secrets.OSS_BUCKET }}
+          OSS_ENDPOINT: ${{ secrets.OSS_ENDPOINT }}
+        run: |
+          set -euo pipefail
+
+          PLATFORMS=("darwin-arm64" "darwin-x64" "linux-arm64" "linux-x64" "linux-arm64-musl" "linux-x64-musl")
+
+          echo "==> Installing ossutil v1.7.19..."
+          curl -fsSL https://gosspublic.alicdn.com/ossutil/1.7.19/ossutil64 -o ossutil
+          chmod +x ossutil
+
+          echo "==> Configuring OSS credentials..."
+          ./ossutil config -e "$OSS_ENDPOINT" -i "$OSS_ACCESS_KEY_ID" -k "$OSS_ACCESS_KEY_SECRET" -L CH
+
+          echo "==> Uploading manifest.json..."
+          ./ossutil cp "./release-assets/manifest.json" \
+            "oss://${OSS_BUCKET}/claude-code-releases/${VERSION}/manifest.json" \
+            --force --meta "Content-Type:application/json"
+
+          echo "==> Uploading checksums-sha256.txt..."
+          ./ossutil cp "./release-assets/checksums-sha256.txt" \
+            "oss://${OSS_BUCKET}/claude-code-releases/${VERSION}/checksums-sha256.txt" \
+            --force --meta "Content-Type:text/plain"
+
+          echo "==> Uploading platform binaries..."
+          for PLATFORM in "${PLATFORMS[@]}"; do
+            echo "  Uploading $PLATFORM..."
+            ./ossutil cp "./release-assets/claude-${VERSION}-${PLATFORM}" \
+              "oss://${OSS_BUCKET}/claude-code-releases/${VERSION}/${PLATFORM}/claude" \
+              --force --meta "Content-Type:application/octet-stream"
+          done
+
+          echo ""
+          echo "==> OSS upload complete. Uploaded paths:"
+          echo "  oss://${OSS_BUCKET}/claude-code-releases/${VERSION}/manifest.json"
+          echo "  oss://${OSS_BUCKET}/claude-code-releases/${VERSION}/checksums-sha256.txt"
+          for PLATFORM in "${PLATFORMS[@]}"; do
+            echo "  oss://${OSS_BUCKET}/claude-code-releases/${VERSION}/${PLATFORM}/claude"
+          done
+
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v2
         with:
