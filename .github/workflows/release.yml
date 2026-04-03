@@ -117,6 +117,13 @@ jobs:
               --force --meta "Content-Type:application/octet-stream"
           done
 
+          echo "==> Updating latest version pointer..."
+          echo -n "${VERSION}" > /tmp/latest.txt
+          ./ossutil cp /tmp/latest.txt \
+            "oss://${OSS_BUCKET}/claude-code-releases/latest.txt" \
+            --force --meta "Content-Type:text/plain"
+          echo "Latest version updated to ${VERSION}"
+
           echo ""
           echo "==> OSS upload complete. Uploaded paths:"
           echo "  oss://${OSS_BUCKET}/claude-code-releases/${VERSION}/manifest.json"
@@ -124,6 +131,7 @@ jobs:
           for PLATFORM in "${PLATFORMS[@]}"; do
             echo "  oss://${OSS_BUCKET}/claude-code-releases/${VERSION}/${PLATFORM}/claude"
           done
+          echo "  oss://${OSS_BUCKET}/claude-code-releases/latest.txt"
 
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v2
